@@ -19,15 +19,22 @@
 #include <math.h>
 //#include <stdint.h>
 
+// factor for converting a radian number to an equivalent number in degrees
+const float RAD2DEG = 4068 / 71;
+
 // MADGWICK_AHRS constructor
-MADGWICK_AHRS::MADGWICK_AHRS(void) {   
+MADGWICK_AHRS::MADGWICK_AHRS(float beta) {   
+    // algorithm gain (2 * proportional gain (Kp))
+    m_beta = beta;
+    // quaternion of sensor frame relative to auxiliary frame
+    m_q0 = 1; m_q1 = 0; m_q2 = 0; m_q3 = 0;
 }
 
 // MADGWICK_AHRS destructor
 MADGWICK_AHRS::~MADGWICK_AHRS(void) {
 }
 
-// get pose in euler angles
+// get pose in Euler angles
 void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz) {
     m_dt_s = dt_s;
     
@@ -37,10 +44,10 @@ void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, fl
     
     madgwickAHRSupdate();
     
-    // transform pose from quaternion to euler format, according to definition from Madgwick
-    angle_x = atan2(2*m_q2*m_q3 - 2*m_q0*m_q1, 2*m_q0*m_q0 + 2*m_q3*m_q3 - 1);
-    angle_y = -asin(2*m_q1*m_q3 + 2*m_q0*m_q2);
-    angle_z = atan2(2*m_q1*m_q2 - 2*m_q0*m_q3, 2*m_q0*m_q0 + 2*m_q1*m_q1 - 1);
+    // transform pose from quaternion to Euler format, according to definition from Madgwick
+    angle_x = atan2(2*m_q2*m_q3 - 2*m_q0*m_q1, 2*m_q0*m_q0 + 2*m_q3*m_q3 - 1) * RAD2DEG;
+    angle_y = -asin(2*m_q1*m_q3 + 2*m_q0*m_q2) * RAD2DEG;
+    angle_z = atan2(2*m_q1*m_q2 - 2*m_q0*m_q3, 2*m_q0*m_q0 + 2*m_q1*m_q1 - 1) * RAD2DEG;
 }
 
 // AHRS algorithm update

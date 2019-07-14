@@ -17,7 +17,7 @@ class MADGWICK_AHRS {
     
 public:
     // MADGWICK_AHRS constructor
-    MADGWICK_AHRS(void);
+    MADGWICK_AHRS(float beta);
 
     // MADGWICK_AHRS destructor
     ~MADGWICK_AHRS(void);
@@ -27,9 +27,10 @@ public:
     
 private:
     // algorithm gain (2 * proportional gain (Kp))
-    float m_beta = 0.1;
+    float m_beta;
     // quaternion of sensor frame relative to auxiliary frame
     float m_q0, m_q1, m_q2, m_q3;
+    
     // imu update time in seconds
     float m_dt_s;
     // imu measurements
