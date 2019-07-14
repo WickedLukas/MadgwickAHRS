@@ -17,7 +17,6 @@
 
 #include "MadgwickAHRS.h"
 #include <math.h>
-//#include <stdint.h>
 
 // factor for converting a radian number to an equivalent number in degrees
 const float RAD2DEG = 4068 / 71;
