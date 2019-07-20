@@ -16,7 +16,7 @@
 // Header files
 
 #include "MadgwickAHRS.h"
-#include <math.h>
+#include <Arduino.h>
 
 // factor for converting a radian number to an equivalent number in degrees
 const float RAD2DEG = 4068 / 71;
@@ -227,16 +227,16 @@ float MADGWICK_AHRS::invSqrt(float x) {
 	return y;
     */
     
-    /*static union {
+    union {
         float f;
         uint32_t i;
-    } conv = {x}; // member 'f' set to value of 'x'
+    } conv = {x};   // member 'f' set to value of 'x'
         
     conv.i = 0x5f3759df - (conv.i >> 1);
-    conv.f *= (1.5f - (0.5f * x * conv.f * conv.f));
+    conv.f *= (1.5f - (0.5f * x * conv.f * conv.f));  // 1st iteration of the newton method
+    conv.f *= (1.5f - (0.5f * x * conv.f * conv.f));  // 2nd iteration of the newton method (optional)
     
     return conv.f;
-    */
     
-    return (1.0f / sqrt(x));
+    //return (1.0f / sqrt(x));  // very slow operation
 }
