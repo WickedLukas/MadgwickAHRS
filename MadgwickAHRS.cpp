@@ -8,7 +8,7 @@
 // Date			Author          Notes
 // 29/09/2011	SOH Madgwick    Initial release
 // 02/10/2011	SOH Madgwick	Optimised for reduced CPU load
-// 19/02/2012	SOH Madgwick	Magnetometer measurement is normalised
+// 19/02/2012	SOH Madgwick	Magnetometer measurement is normalized
 // 07/07/2019   Lukas           Adaptations for own projects
 //=====================================================================================================
 
@@ -22,15 +22,37 @@
 const float RAD2DEG = 4068 / 71;
 
 // MADGWICK_AHRS constructor
-MADGWICK_AHRS::MADGWICK_AHRS(float beta) {   
-    // algorithm gain (2 * proportional gain (Kp))
+MADGWICK_AHRS::MADGWICK_AHRS(float beta) {
     m_beta = beta;
-    // quaternion of sensor frame relative to auxiliary frame
-    m_q0 = 1; m_q1 = 0; m_q2 = 0; m_q3 = 0;
+    
+    m_q0  = 1; m_q1  = 0; m_q2  = 0; m_q3  = 0;
+    m_qz0 = 1;                       m_qz3 = 0;
 }
 
 // MADGWICK_AHRS destructor
 MADGWICK_AHRS::~MADGWICK_AHRS(void) {
+}
+
+// set beta value
+void MADGWICK_AHRS::set_beta(float beta) {
+    m_beta = beta;
+}
+
+// set current z/yaw-angle
+void MADGWICK_AHRS::set_angle_z(float angle_z_new) {
+    float rotAngle_z_rad;
+    float recipNorm;
+    
+    // calculate rotation angle z in rad
+    rotAngle_z_rad = angle_z_new / RAD2DEG - atan2(2*m_q1*m_q2 - 2*m_q0*m_q3, 2*m_q0*m_q0 + 2*m_q1*m_q1 - 1);
+    
+    // calculate z rotation quaternion
+    m_qz0 = cos(rotAngle_z_rad / 2);
+    m_qz3 = sin(rotAngle_z_rad / 2);
+    
+    recipNorm = invSqrt(m_qz0 * m_qz0 + m_qz3 * m_qz3);
+    m_qz0 *= recipNorm;
+    m_qz3 *= recipNorm;
 }
 
 // get pose in Euler angles
@@ -42,6 +64,12 @@ void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, fl
     m_mx = mx; m_my = my; m_mz = mz;
     
     madgwickAHRSupdate();
+    
+    // z/yaw-angle rotation
+    m_q0 =  m_q0*m_qz0 - m_q3*m_qz3;
+    m_q1 =  m_q1*m_qz0 + m_q2*m_qz3;
+    m_q2 = -m_q1*m_qz3 + m_q2*m_qz0;
+    m_q3 =  m_q0*m_qz3 + m_q3*m_qz0;
     
     // transform pose from quaternion to Euler format, according to definition from Madgwick
     angle_x = atan2(2*m_q2*m_q3 - 2*m_q0*m_q1, 2*m_q0*m_q0 + 2*m_q3*m_q3 - 1) * RAD2DEG;
@@ -57,7 +85,7 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 	static float hx, hy;
 	static float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
 
-	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
+	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalization)
 	if((m_mx == 0.0f) && (m_my == 0.0f) && (m_mz == 0.0f)) {
 		madgwickAHRSupdateIMU();
 		return;
@@ -69,16 +97,16 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 	qDot3 = 0.5f * (m_q0 * m_gy - m_q1 * m_gz + m_q3 * m_gx);
 	qDot4 = 0.5f * (m_q0 * m_gz + m_q1 * m_gy - m_q2 * m_gx);
 
-	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
 	if(!((m_ax == 0.0f) && (m_ay == 0.0f) && (m_az == 0.0f))) {
 
-		// Normalise accelerometer measurement
+		// normalize accelerometer measurement
 		recipNorm = invSqrt(m_ax * m_ax + m_ay * m_ay + m_az * m_az);
 		m_ax *= recipNorm;
 		m_ay *= recipNorm;
 		m_az *= recipNorm;   
 
-		// Normalise magnetometer measurement
+		// normalize magnetometer measurement
 		recipNorm = invSqrt(m_mx * m_mx + m_my * m_my + m_mz * m_mz);
 		m_mx *= recipNorm;
 		m_my *= recipNorm;
@@ -119,7 +147,7 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 		s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - m_ax) + _2q0 * (2.0f * q0q1 + _2q2q3 - m_ay) - 4.0f * m_q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - m_az) + _2bz * m_q3 * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - m_mx) + (_2bx * m_q2 + _2bz * m_q0) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - m_my) + (_2bx * m_q3 - _4bz * m_q1) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - m_mz);
 		s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - m_ax) + _2q3 * (2.0f * q0q1 + _2q2q3 - m_ay) - 4.0f * m_q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - m_az) + (-_4bx * m_q2 - _2bz * m_q0) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - m_mx) + (_2bx * m_q1 + _2bz * m_q3) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - m_my) + (_2bx * m_q0 - _4bz * m_q2) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - m_mz);
 		s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - m_ax) + _2q2 * (2.0f * q0q1 + _2q2q3 - m_ay) + (-_4bx * m_q3 + _2bz * m_q1) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - m_mx) + (-_2bx * m_q0 + _2bz * m_q2) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - m_my) + _2bx * m_q1 * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - m_mz);
-		recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalise step magnitude
+		recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalize step magnitude
 		s0 *= recipNorm;
 		s1 *= recipNorm;
 		s2 *= recipNorm;
@@ -138,7 +166,7 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 	m_q2 += qDot3 * m_dt_s;
 	m_q3 += qDot4 * m_dt_s;
 
-	// Normalise quaternion
+	// normalize quaternion
 	recipNorm = invSqrt(m_q0 * m_q0 + m_q1 * m_q1 + m_q2 * m_q2 + m_q3 * m_q3);
 	m_q0 *= recipNorm;
 	m_q1 *= recipNorm;
@@ -159,10 +187,10 @@ void MADGWICK_AHRS::madgwickAHRSupdateIMU() {
 	qDot3 = 0.5f * (m_q0 * m_gy - m_q1 * m_gz + m_q3 * m_gx);
 	qDot4 = 0.5f * (m_q0 * m_gz + m_q1 * m_gy - m_q2 * m_gx);
 
-	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
 	if(!((m_ax == 0.0f) && (m_ay == 0.0f) && (m_az == 0.0f))) {
 
-		// Normalise accelerometer measurement
+		// normalize accelerometer measurement
 		recipNorm = invSqrt(m_ax * m_ax + m_ay * m_ay + m_az * m_az);
 		m_ax *= recipNorm;
 		m_ay *= recipNorm;
@@ -188,7 +216,7 @@ void MADGWICK_AHRS::madgwickAHRSupdateIMU() {
 		s1 = _4q1 * q3q3 - _2q3 * m_ax + 4.0f * q0q0 * m_q1 - _2q0 * m_ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * m_az;
 		s2 = 4.0f * q0q0 * m_q2 + _2q0 * m_ax + _4q2 * q3q3 - _2q3 * m_ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * m_az;
 		s3 = 4.0f * q1q1 * m_q3 - _2q1 * m_ax + 4.0f * q2q2 * m_q3 - _2q2 * m_ay;
-		recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalise step magnitude
+		recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalize step magnitude
 		s0 *= recipNorm;
 		s1 *= recipNorm;
 		s2 *= recipNorm;
@@ -207,7 +235,7 @@ void MADGWICK_AHRS::madgwickAHRSupdateIMU() {
 	m_q2 += qDot3 * m_dt_s;
 	m_q3 += qDot4 * m_dt_s;
 
-	// Normalise quaternion
+	// normalize quaternion
 	recipNorm = invSqrt(m_q0 * m_q0 + m_q1 * m_q1 + m_q2 * m_q2 + m_q3 * m_q3);
 	m_q0 *= recipNorm;
 	m_q1 *= recipNorm;
@@ -218,15 +246,6 @@ void MADGWICK_AHRS::madgwickAHRSupdateIMU() {
 // Fast inverse square-root
 // See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
 float MADGWICK_AHRS::invSqrt(float x) {
-	/*float halfx = 0.5f * x;
-	float y = x;
-	long i = *(long*)&y;
-	i = 0x5f3759df - (i>>1);
-	y = *(float*)&i;
-	y = y * (1.5f - (halfx * y * y));
-	return y;
-    */
-    
     union {
         float f;
         uint32_t i;
@@ -237,6 +256,4 @@ float MADGWICK_AHRS::invSqrt(float x) {
     conv.f *= (1.5f - (0.5f * x * conv.f * conv.f));  // 2nd iteration of the newton method (optional)
     
     return conv.f;
-    
-    //return (1.0f / sqrt(x));  // very slow operation
 }
