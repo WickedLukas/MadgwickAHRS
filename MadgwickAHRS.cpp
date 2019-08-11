@@ -26,7 +26,6 @@ MADGWICK_AHRS::MADGWICK_AHRS(float beta) {
     m_beta = beta;
     
     m_q0  = 1; m_q1  = 0; m_q2  = 0; m_q3  = 0;
-    m_qz0 = 1;                       m_qz3 = 0;
 }
 
 // MADGWICK_AHRS destructor
@@ -39,8 +38,12 @@ void MADGWICK_AHRS::set_beta(float beta) {
 }
 
 // set current z/yaw-angle
-void MADGWICK_AHRS::set_angle_z(float angle_z_new) {
-    float rotAngle_z_rad;
+void MADGWICK_AHRS::set_refAngle_z(float refAngle_z) {
+    float refAngle_z_rad;
+    
+    // TODO
+    
+    /*
     float recipNorm;
     
     // calculate rotation angle z in rad
@@ -53,6 +56,7 @@ void MADGWICK_AHRS::set_angle_z(float angle_z_new) {
     recipNorm = invSqrt(m_qz0 * m_qz0 + m_qz3 * m_qz3);
     m_qz0 *= recipNorm;
     m_qz3 *= recipNorm;
+    */
 }
 
 // get pose in Euler angles
@@ -64,17 +68,21 @@ void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, fl
     m_mx = mx; m_my = my; m_mz = mz;
     
     madgwickAHRSupdate();
-    
-    // z/yaw-angle rotation
-    m_q0 =  m_q0*m_qz0 - m_q3*m_qz3;
-    m_q1 =  m_q1*m_qz0 + m_q2*m_qz3;
-    m_q2 = -m_q1*m_qz3 + m_q2*m_qz0;
-    m_q3 =  m_q0*m_qz3 + m_q3*m_qz0;
-    
+      
     // transform pose from quaternion to Euler format, according to definition from Madgwick
-    angle_x = atan2(2*m_q2*m_q3 - 2*m_q0*m_q1, 2*m_q0*m_q0 + 2*m_q3*m_q3 - 1) * RAD2DEG;
-    angle_y = -asin(2*m_q1*m_q3 + 2*m_q0*m_q2) * RAD2DEG;
-    angle_z = atan2(2*m_q1*m_q2 - 2*m_q0*m_q3, 2*m_q0*m_q0 + 2*m_q1*m_q1 - 1) * RAD2DEG;
+    angle_x = atan2(2.0f * (m_q2*m_q3 - m_q0*m_q1), 2.0f * (m_q0*m_q0 + m_q3*m_q3) - 1) * RAD2DEG;
+    angle_y = -asin(2.0f * (m_q1*m_q3 + m_q0*m_q2)) * RAD2DEG;
+    angle_z = atan2(2.0f * (m_q1*m_q2 - m_q0*m_q3), 2.0f * (m_q0*m_q0 + m_q1*m_q1) - 1) * RAD2DEG;
+    
+    //kriswiner
+    /*angle_x = atan2(2.0f * (m_q0*m_q1 + m_q2*m_q3), 2.0f * (m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2+ m_q3*m_q3)) * RAD2DEG;
+    angle_y = -asin(2.0f * (m_q1*m_q3 - m_q0*m_q2)) * RAD2DEG;
+    angle_z = atan2(2.0f * (m_q1*m_q2 + m_q0*m_q3), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3) * RAD2DEG;*/
+    
+    // wikipedia
+    /*angle_x = atan2(2.0f * (m_q0*m_q1 + m_q2*m_q3), 1- 2.0f * (m_q1*m_q1 + m_q2*m_q2)) * RAD2DEG;
+    angle_y = asin(2.0f * (m_q0*m_q2 - m_q1*m_q3)) * RAD2DEG;
+    angle_z = atan2(2.0f * (m_q0*m_q3 + m_q1*m_q2), 1 - 2 * (m_q2*m_q2 + m_q3*m_q3)) * RAD2DEG;*/
 }
 
 // AHRS algorithm update

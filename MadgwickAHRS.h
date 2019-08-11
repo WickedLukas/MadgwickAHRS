@@ -26,7 +26,7 @@ public:
     void set_beta(float beta);
     
     // set current z/yaw-angle
-    void set_angle_z(float angle_z_new);
+    void set_refAngle_z(float refAngle_z);
         
     // get pose in euler angles
     void get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
@@ -35,7 +35,6 @@ private:
     float m_beta;   // algorithm gain (2 * proportional gain (Kp))
     
     float m_q0, m_q1, m_q2, m_q3;   // quaternion of sensor frame relative to auxiliary frame
-    float m_qz0,            m_qz3;  // rotation quaternion for z/yaw-angle
     
     // imu update time in seconds
     float m_dt_s;
