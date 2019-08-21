@@ -39,36 +39,6 @@ void MADGWICK_AHRS::set_beta(float beta) {
 	m_beta = beta;
 }
 
-// set z-axis angle and enable z-axis rotation
-void MADGWICK_AHRS::set_angle_z(float angle_z_new) {
-	static float rotAngle_z_rad;
-	static float recipNorm;
-	
-	// calculate z-axis rotation angle for left handed coordinate system with xyz rotation sequence
-	/*
-	rotAngle_z_rad = angle_z_new / RAD2DEG - atan2(2*(m_q0*m_q3 - m_q1*m_q2), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3);
-	*/
-	
-	// calculate z-axis rotation angle for left handed coordinate system with zyx rotation sequence
-	rotAngle_z_rad = angle_z_new / RAD2DEG - atan2(2*(m_q1*m_q2 + m_q0*m_q3), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3);
-	
-	// calculate z-axis rotation quaternion
-	m_qz0 = cos(rotAngle_z_rad / 2);
-	m_qz3 = sin(rotAngle_z_rad / 2);
-	
-	recipNorm = invSqrt(m_qz0 * m_qz0 + m_qz3 * m_qz3);
-	
-	m_qz0 *= recipNorm;
-	m_qz3 *= recipNorm;
-	
-	m_z_rotation = true;
-}
-
-// enable or disable z-axis rotation
-void MADGWICK_AHRS::enable_z_rotation(bool z_rotation) {
-	m_z_rotation = z_rotation;
-}
-
 // get pose in euler angles
 void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz) {
 	m_dt_s = dt_s;
@@ -79,48 +49,10 @@ void MADGWICK_AHRS::get_euler(float &angle_x, float &angle_y, float &angle_z, fl
 	
 	madgwickAHRSupdate();
 	
-	if (m_z_rotation) {
-		// z-axis rotation after quaternion rotation: m_qz x m_q
-		m_qr0 = m_q0*m_qz0 - m_q3*m_qz3;
-		m_qr1 = m_q1*m_qz0 - m_q2*m_qz3;
-		m_qr2 = m_q1*m_qz3 + m_q2*m_qz0;
-		m_qr3 = m_q0*m_qz3 + m_q3*m_qz0;
-		
-		// z-axis rotation before quaternion rotation: m_q * m_qz
-		/*
-		m_qr0 = m_q0*m_qz0 - m_q3*m_qz3;
-		m_qr1 = m_q1*m_qz0 + m_q2*m_qz3;
-		m_qr2 = -m_q1*m_qz3 + m_q2*m_qz0;
-		m_qr3 = m_q0*m_qz3 + m_q3*m_qz0;
-		*/
-		
-		// euler angles for left handed coordinate system with xyz rotation sequence
-		/*
-		angle_x = atan2(2*(m_qr0*m_qr1 - m_qr2*m_qr3), m_qr0*m_qr0 - m_qr1*m_qr1 - m_qr2*m_qr2 + m_qr3*m_qr3) * RAD2DEG;
-		angle_y = asin(2*(m_qr1*m_qr3 + m_qr0*m_qr2)) * RAD2DEG;
-		angle_z = atan2(2*(m_qr0*m_qr3 - m_qr1*m_qr2), m_qr0*m_qr0 + m_qr1*m_qr1 - m_qr2*m_qr2 - m_qr3*m_qr3) * RAD2DEG;
-		*/
-		
-		// euler angles for left handed coordinate system with zyx rotation sequence
-		angle_z = atan2(2*(m_qr1*m_qr2 + m_qr0*m_qr3), m_qr0*m_qr0 + m_qr1*m_qr1 - m_qr2*m_qr2 - m_qr3*m_qr3) * RAD2DEG;
-		angle_y = asin(-2*(m_qr1*m_qr3 - m_qr0*m_qr2)) * RAD2DEG;
-		angle_x = atan2(2*(m_qr2*m_qr3 + m_qr0*m_qr1), m_qr0*m_qr0 - m_qr1*m_qr1 - m_qr2*m_qr2 + m_qr3*m_qr3) * RAD2DEG;
-		
-		
-	}
-	else {
-		// euler angles for left handed coordinate system with xyz rotation sequence
-		/*
-		angle_x = atan2(2*(m_q0*m_q1 - m_q2*m_q3), m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2 + m_q3*m_q3) * RAD2DEG;
-		angle_y = asin(2*(m_q1*m_q3 + m_q0*m_q2)) * RAD2DEG;
-		angle_z = atan2(2*(m_q0*m_q3 - m_q1*m_q2), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3) * RAD2DEG;
-		*/
-		
-		// euler angles for left handed coordinate system with zyx rotation sequence
-		angle_z = atan2(2*(m_q1*m_q2 + m_q0*m_q3), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3) * RAD2DEG;
-		angle_y = asin(-2*(m_q1*m_q3 - m_q0*m_q2)) * RAD2DEG;
-		angle_x = atan2(2*(m_q2*m_q3 + m_q0*m_q1), m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2 + m_q3*m_q3) * RAD2DEG;
-	}
+	// euler angles for left handed coordinate system with zyx rotation sequence
+	angle_z = atan2(2*(m_q1*m_q2 + m_q0*m_q3), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3) * RAD2DEG;
+	angle_y = asin(-2*(m_q1*m_q3 - m_q0*m_q2)) * RAD2DEG;
+	angle_x = atan2(2*(m_q2*m_q3 + m_q0*m_q1), m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2 + m_q3*m_q3) * RAD2DEG;
 }
 
 // AHRS algorithm update

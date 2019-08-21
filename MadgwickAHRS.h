@@ -25,12 +25,6 @@ public:
 	// set beta value
 	void set_beta(float beta);
 	
-	// set z-axis angle and enable z-axis rotation
-	void set_angle_z(float angle_z_new);
-	
-	// enable or disable z-axis rotation
-	void enable_z_rotation(bool z_rotation);
-	
 	// get pose in euler angles
 	void get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 	
