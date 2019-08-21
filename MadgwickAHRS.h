@@ -18,24 +18,31 @@ class MADGWICK_AHRS {
 public:
     // MADGWICK_AHRS constructor
     MADGWICK_AHRS(float beta);
-
+    
     // MADGWICK_AHRS destructor
     ~MADGWICK_AHRS(void);
     
     // set beta value
     void set_beta(float beta);
     
-    // set current z/yaw-angle
+    // set z-axis angle and enable z-axis rotation
     void set_angle_z(float angle_z_new);
-        
+    
+    // enable or disable z-axis rotation
+    void enable_z_rotation(bool z_rotation);
+    
     // get pose in euler angles
     void get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
     
 private:
+    
     float m_beta;   // algorithm gain (2 * proportional gain (Kp))
     
-    float m_q0, m_q1, m_q2, m_q3;   // quaternion of sensor frame relative to auxiliary frame
-    float m_qz0,            m_qz3;  // rotation quaternion for z/yaw-angle
+    bool m_z_rotation;	// flag for z-axis rotation
+    
+    float m_q0,	m_q1, m_q2, m_q3;       // quaternion of sensor frame relative to auxiliary frame
+    float m_qz0, m_qz3;	                // rotation quaternion for z/yaw-angle
+    float m_qr0, m_qr1, m_qr2, m_qr3;   // m_q rotated with m_qz
     
     // imu update time in seconds
     float m_dt_s;
