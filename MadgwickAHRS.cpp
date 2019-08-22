@@ -27,7 +27,6 @@ MADGWICK_AHRS::MADGWICK_AHRS(float beta) {
 	m_z_rotation = false;
 	
 	m_q0 = 1; m_q1 = 0; m_q2 = 0; m_q3 = 0;
-	m_qz0 = 1; m_qz3 = 0;
 }
 
 // MADGWICK_AHRS destructor

@@ -29,14 +29,11 @@ public:
 	void get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
 	
 private:
-	
 	float m_beta;	// algorithm gain (2 * proportional gain (Kp))
 	
 	bool m_z_rotation;	// flag for z-axis rotation
 	
 	float m_q0,	m_q1, m_q2, m_q3;		// quaternion of sensor frame relative to auxiliary frame
-	float m_qz0, m_qz3;					// rotation quaternion for z/yaw-angle
-	float m_qr0, m_qr1, m_qr2, m_qr3;	// m_q rotated with m_qz
 	
 	// imu update time in seconds
 	float m_dt_s;
