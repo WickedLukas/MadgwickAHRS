@@ -26,7 +26,7 @@ public:
 	void set_beta(float beta);
 	
 	// get pose in euler angles
-	void get_euler(float &angle_x, float &angle_y, float &angle_z, float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
+	void get_euler(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z);
 	
 private:
 	float m_beta;	// algorithm gain (2 * proportional gain (Kp))
