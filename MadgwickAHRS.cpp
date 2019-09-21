@@ -16,6 +16,7 @@
 // Header files
 
 #include "MadgwickAHRS.h"
+
 #include <Arduino.h>
 
 // factor for converting a radian number to an equivalent number in degrees

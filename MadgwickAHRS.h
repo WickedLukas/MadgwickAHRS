@@ -15,7 +15,7 @@
 
 class MADGWICK_AHRS {
 	
-public:
+	public:
 	// MADGWICK_AHRS constructor
 	MADGWICK_AHRS(float beta);
 	
@@ -28,7 +28,7 @@ public:
 	// get pose in euler angles
 	void get_euler(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z);
 	
-private:
+	private:
 	float m_beta;	// algorithm gain (2 * proportional gain (Kp))
 	
 	bool m_z_rotation;	// flag for z-axis rotation
