@@ -20,7 +20,7 @@
 #include <Arduino.h>
 
 // factor for converting a radian number to an equivalent number in degrees
-const float RAD2DEG = 4068 / 71;
+const float RAD2DEG = (float) 4068 / 71;
 
 // MADGWICK_AHRS constructor
 MADGWICK_AHRS::MADGWICK_AHRS(float beta) {
