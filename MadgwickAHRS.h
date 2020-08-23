@@ -25,8 +25,8 @@ class MADGWICK_AHRS {
 	// set beta value
 	void set_beta(float beta);
 	
-	// get pose in euler angles
-	void get_euler(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z);
+	// get pose in euler angles and quaternion form
+	void get_euler_quaternion(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z, float* pose_q);
 	
 	private:
 	float m_beta;	// algorithm gain (2 * proportional gain (Kp))	(0.041 MARG, 0.033 IMU)

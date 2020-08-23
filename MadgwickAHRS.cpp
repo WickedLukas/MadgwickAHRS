@@ -38,8 +38,8 @@ void MADGWICK_AHRS::set_beta(float beta) {
 	m_beta = beta;
 }
 
-// get pose in euler angles
-void MADGWICK_AHRS::get_euler(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z) {
+// get pose in euler angles and quaternion form
+void MADGWICK_AHRS::get_euler_quaternion(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z, float* pose_q) {
 	m_dt_s = dt_s;
 	
 	m_ax = ax; m_ay = ay; m_az = az;
@@ -52,6 +52,12 @@ void MADGWICK_AHRS::get_euler(float dt_s, float ax, float ay, float az, float gx
 	angle_z = atan2(2*(m_q1*m_q2 + m_q0*m_q3), m_q0*m_q0 + m_q1*m_q1 - m_q2*m_q2 - m_q3*m_q3) * RAD2DEG;
 	angle_y = asin(-2*(m_q1*m_q3 - m_q0*m_q2)) * RAD2DEG;
 	angle_x = atan2(2*(m_q2*m_q3 + m_q0*m_q1), m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2 + m_q3*m_q3) * RAD2DEG;
+	
+	// quaternion
+	pose_q[0] = m_q0;
+	pose_q[1] = m_q1;
+	pose_q[2] = m_q2;
+	pose_q[3] = m_q3;
 }
 
 // AHRS algorithm update
