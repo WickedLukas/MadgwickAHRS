@@ -23,9 +23,8 @@
 const float RAD2DEG = (float) 4068 / 71;
 
 // MADGWICK_AHRS constructor
-MADGWICK_AHRS::MADGWICK_AHRS(float beta, float zeta) {
+MADGWICK_AHRS::MADGWICK_AHRS(float beta) {
 	m_beta = beta;
-	m_zeta = zeta;
 	
 	m_q0 = 1; m_q1 = 0; m_q2 = 0; m_q3 = 0;
 }
@@ -37,11 +36,6 @@ MADGWICK_AHRS::~MADGWICK_AHRS(void) {
 // set beta value
 void MADGWICK_AHRS::set_beta(float beta) {
 	m_beta = beta;
-}
-
-// set zeta value
-void MADGWICK_AHRS::set_zeta(float zeta) {
-	m_zeta = zeta;
 }
 
 // get pose in euler angles
@@ -60,13 +54,6 @@ void MADGWICK_AHRS::get_euler(float dt_s, float ax, float ay, float az, float gx
 	angle_x = atan2(2*(m_q2*m_q3 + m_q0*m_q1), m_q0*m_q0 - m_q1*m_q1 - m_q2*m_q2 + m_q3*m_q3) * RAD2DEG;
 }
 
-// get gyro bias estimation
-void MADGWICK_AHRS::get_gyroBias(float &gbx, float &gby, float &gbz) {
-	gbx = m_gbx;
-	gby = m_gby;
-	gbz = m_gbz;
-}
-
 // AHRS algorithm update
 void MADGWICK_AHRS::madgwickAHRSupdate() {
 	static float recipNorm;
@@ -81,6 +68,11 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 		return;
 	}
 
+	// Rate of change of quaternion from gyroscope
+	qDot1 = 0.5f * (-m_q1 * m_gx - m_q2 * m_gy - m_q3 * m_gz);
+	qDot2 = 0.5f * (m_q0 * m_gx + m_q2 * m_gz - m_q3 * m_gy);
+	qDot3 = 0.5f * (m_q0 * m_gy - m_q1 * m_gz + m_q3 * m_gx);
+	qDot4 = 0.5f * (m_q0 * m_gz + m_q1 * m_gy - m_q2 * m_gx);
 
 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalization)
 	if(!((m_ax == 0.0f) && (m_ay == 0.0f) && (m_az == 0.0f))) {
@@ -138,32 +130,11 @@ void MADGWICK_AHRS::madgwickAHRSupdate() {
 		s2 *= recipNorm;
 		s3 *= recipNorm;
 
-		// Calculate and remove gyro biases
-		m_gbx += (_2q0 * s1 - _2q1 * s0 - _2q2 * s3 + _2q3 * s2) * m_dt_s * m_zeta;
-		m_gby += (_2q0 * s2 + _2q1 * s3 - _2q2 * s0 - _2q3 * s1) * m_dt_s * m_zeta;
-		m_gbz += (_2q0 * s3 - _2q1 * s2 + _2q2 * s1 - _2q3 * s0) * m_dt_s * m_zeta;
-		m_gx -= m_gbx;
-		m_gy -= m_gby;
-		m_gz -= m_gbz;
-
-		// Rate of change of quaternion from gyroscope
-		qDot1 = 0.5f * (-m_q1 * m_gx - m_q2 * m_gy - m_q3 * m_gz);
-		qDot2 = 0.5f * (m_q0 * m_gx + m_q2 * m_gz - m_q3 * m_gy);
-		qDot3 = 0.5f * (m_q0 * m_gy - m_q1 * m_gz + m_q3 * m_gx);
-		qDot4 = 0.5f * (m_q0 * m_gz + m_q1 * m_gy - m_q2 * m_gx);
-
 		// Apply feedback step
 		qDot1 -= m_beta * s0;
 		qDot2 -= m_beta * s1;
 		qDot3 -= m_beta * s2;
 		qDot4 -= m_beta * s3;
-	}
-	else {
-		// Rate of change of quaternion from gyroscope
-		qDot1 += 0.5f * (-m_q1 * m_gx - m_q2 * m_gy - m_q3 * m_gz);
-		qDot2 += 0.5f * (m_q0 * m_gx + m_q2 * m_gz - m_q3 * m_gy);
-		qDot3 += 0.5f * (m_q0 * m_gy - m_q1 * m_gz + m_q3 * m_gx);
-		qDot4 += 0.5f * (m_q0 * m_gz + m_q1 * m_gy - m_q2 * m_gx);
 	}
 
 	// Integrate rate of change of quaternion to yield quaternion

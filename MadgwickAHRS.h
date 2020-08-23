@@ -17,7 +17,7 @@ class MADGWICK_AHRS {
 	
 	public:
 	// MADGWICK_AHRS constructor
-	MADGWICK_AHRS(float beta, float zeta = 0);
+	MADGWICK_AHRS(float beta);
 	
 	// MADGWICK_AHRS destructor
 	~MADGWICK_AHRS(void);
@@ -25,18 +25,11 @@ class MADGWICK_AHRS {
 	// set beta value
 	void set_beta(float beta);
 	
-	// set zeta value
-	void set_zeta(float zeta);
-	
 	// get pose in euler angles
 	void get_euler(float dt_s, float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz, float &angle_x, float &angle_y, float &angle_z);
 	
-	// get gyro bias estimation
-	void get_gyroBias(float &gbx, float &gby, float &gbz);
-	
 	private:
 	float m_beta;	// algorithm gain (2 * proportional gain (Kp))	(0.041 MARG, 0.033 IMU)
-	float m_zeta;	// gain to remove gyroscope bias errors 		(0.003 - 0.015)
 	
 	float m_q0,	m_q1, m_q2, m_q3;		// quaternion of sensor frame relative to auxiliary frame
 	
@@ -44,11 +37,6 @@ class MADGWICK_AHRS {
 	float m_dt_s;
 	// imu measurements
 	float m_ax, m_ay, m_az, m_gx, m_gy, m_gz, m_mx, m_my, m_mz;
-	
-	// estimated gyro biases
-	float m_gbx = 0;
-	float m_gby = 0;
-	float m_gbz = 0;
 	
 	// AHRS algorithm update
 	void madgwickAHRSupdate();
